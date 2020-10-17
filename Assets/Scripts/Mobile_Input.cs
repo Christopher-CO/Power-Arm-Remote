@@ -14,17 +14,25 @@ public class Mobile_Input : MonoBehaviour
     public float lowerLimitY = -4.0f;
     public float topSpeed = 0;
 
+    private bool isHighlighting = false;
+    [SerializeField]
+    private Material sliderTextMat;
+    private Color initSliderTextMatGlowCol;
 
     // Start is called before the first frame update
     void Start()
     {
         targetTransform = target.GetComponent<Transform>();
+        initSliderTextMatGlowCol = sliderTextMat.GetColor("_GlowColor");
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        MoveIKTarget(joystick.Horizontal, joystick.Vertical);
+        if (topSpeed > 0)
+            MoveIKTarget(joystick.Horizontal, joystick.Vertical);
+        else if (!isHighlighting && (joystick.Horizontal + joystick.Vertical) > 0)
+            StartCoroutine(HighlightMovementSpeedSlider());
     }
 
     void MoveIKTarget(float throttleX, float throttleY)
@@ -44,13 +52,30 @@ public class Mobile_Input : MonoBehaviour
             //targetTransform.Translate(displacementY, Space.World);
             targetTransform.position += displacementY;
         }
-        Debug.Log(displacementX + " " + displacementY + " " + targetTransform.position);
+        
+        //Debug.Log(displacementX + " " + displacementY + " " + targetTransform.position);
 
     }
 
     public void SetTopSpeed(float userTopSpeed)
     {
         topSpeed = userTopSpeed / 10; //convert from cm/s using scaling factor
+    }
+
+    IEnumerator HighlightMovementSpeedSlider()
+    {
+        isHighlighting = true;
+
+        for(float i = 0; i < 3; i += Time.deltaTime)
+        {
+            sliderTextMat.SetColor("_GlowColor", initSliderTextMatGlowCol * Mathf.Lerp(-10f, 10f, Mathf.PingPong(i*2, 1)));
+            yield return new WaitForSeconds(0);
+        }
+
+        sliderTextMat.SetColor("_GlowColor", initSliderTextMatGlowCol * 1f);
+
+        isHighlighting = false;
+
     }
 
 }
